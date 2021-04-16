@@ -1,0 +1,45 @@
+# Points Calculator
+
+This implements a Spring Cloud Stream `sink` which provides a service to calculate rewards points for a new purchase amount.
+This is intended to be used in a simple stream definition with http source, for example:
+
+```bash
+http | points-calculator
+```
+
+The points calculator sink is composed of two functions, defined as Spring beans:
+
+```java
+private static final int POINTS_MULTIPLIER = 100;
+
+@Bean
+public Function<Double, Integer> calculatePoints() {
+return amount -> BigDecimal.valueOf(amount)
+.setScale(2)
+.multiply(BigDecimal.valueOf(POINTS_MULTIPLIER))
+.intValue();
+}
+
+@Bean
+Consumer<Integer> postPoints(HttpRequestFunction httpRequestFunction) {
+    return points -> httpRequestFunction.apply(Flux.just(new GenericMessage(points)))
+            .doOnError((Consumer<Throwable>) throwable -> logger.error(throwable.getMessage(), throwable)
+            ).blockFirst();
+}
+```
+
+The function `calculatePoints` is trivial. It merely, multiples the purchase amount by a multiplier, set to 100 in this case. Here we use BigDecimal, as
+for recommended for financial calculations.
+
+The `postPoints` uses a prepackaged `HttpRequestFunction`, available for streaming applications which need to make an external HTTP request, in a variety of
+applications. HttpRequestFunction is a reactive function. With a signature of `Function<Flux<Message<?>>, Flux<Message<?>>>`, it accepts a stream of messages and
+returns a stream of responses. The request and response body types, as well as the HTTP method to use, and the URL, are given declaratively be SpEL expressions.
+In this case, we set static values where appropriate in `application.properties`.  The URL will be set at runtime.
+
+Here, we wrap the core function inside a blocking `Consumer<Integer>`, since we don't require non-blocking I/O for this application
+
+We declare a Spring Cloud Function composition by setting `spring.cloud.function.definition=calculatePoints|postPoints` in `application.properties`.
+Composing a Function with a Consumer is logically equivalent to a Consumer, which is the functional implementation of a `sink`. A sink terminates a stream.
+In other words, the HTTP request is fire-and-forget - we don't require a response.
+
+
