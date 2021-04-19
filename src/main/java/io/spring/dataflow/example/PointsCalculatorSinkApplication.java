@@ -30,7 +30,7 @@ public class PointsCalculatorSinkApplication {
 	}
 
 	@Bean
-	public Function<Double, Integer> calculatePoints() {
+	Function<Double, Integer> calculatePoints() {
 		return amount -> BigDecimal.valueOf(amount)
 				.setScale(2)
 				.multiply(BigDecimal.valueOf(POINTS_MULTIPLIER))
