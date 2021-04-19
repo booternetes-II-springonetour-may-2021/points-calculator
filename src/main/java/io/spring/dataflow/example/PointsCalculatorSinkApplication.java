@@ -6,6 +6,7 @@ import java.util.function.Function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.messaging.Message;
 import reactor.core.publisher.Flux;
 
 import org.springframework.boot.SpringApplication;
@@ -30,18 +31,21 @@ public class PointsCalculatorSinkApplication {
 	}
 
 	@Bean
-	public Function<Double, Integer> calculatePoints() {
+	Function<Double, Integer> calculatePoints() {
 		return amount -> BigDecimal.valueOf(amount)
-				.setScale(2)
-				.multiply(BigDecimal.valueOf(POINTS_MULTIPLIER))
-				.intValue();
+			.setScale(2)
+			.multiply(BigDecimal.valueOf(POINTS_MULTIPLIER))
+			.intValue();
 	}
 
 	@Bean
 	Consumer<Integer> postPoints(HttpRequestFunction httpRequestFunction) {
-		return points -> httpRequestFunction.apply(Flux.just(new GenericMessage(points)))
-				.doOnError((Consumer<Throwable>) throwable -> logger.error(throwable.getMessage(), throwable)
-				).blockFirst();
+		return points -> {
+			Flux<Message<?>> messages = Flux.just(new GenericMessage<>(points));
+			httpRequestFunction
+				.apply(messages)
+				.doOnError(throwable -> logger.error(throwable.getMessage(), throwable))
+				.blockFirst();
+		};
 	}
-
 }
