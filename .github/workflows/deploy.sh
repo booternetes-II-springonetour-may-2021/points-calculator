@@ -14,7 +14,7 @@ if [[ $(helm list | tail -n +2 | grep spring-cloud-dataflow | awk '{print $8}') 
 else
   export SERVICE_PORT=$(kubectl get --namespace default -o jsonpath="***.spec.ports[0].port***" services my-release-spring-cloud-dataflow-server)
   export SERVICE_IP=$(kubectl get svc --namespace default my-release-spring-cloud-dataflow-server -o jsonpath='***.status.loadBalancer.ingress[0].ip***')
-  echo "http://$***SERVICE_IP***:$***SERVICE_PORT***/dashboard"
+  echo "SCDF dashboard: http://${SERVICE_IP}:${SERVICE_PORT}/dashboard"
 fi
 
 exit 0
