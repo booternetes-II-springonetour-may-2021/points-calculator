@@ -12,8 +12,9 @@ if [[ $(helm list | tail -n +2 | grep spring-cloud-dataflow | awk '{print $8}') 
   helm repo add bitnami https://charts.bitnami.com/bitnami
   helm install --set server.service.type=LoadBalancer my-release bitnami/spring-cloud-dataflow
 else
-  export SERVICE_PORT=$(kubectl get --namespace default -o jsonpath="***.spec.ports[0].port***" services my-release-spring-cloud-dataflow-server)
-  export SERVICE_IP=$(kubectl get svc --namespace default my-release-spring-cloud-dataflow-server -o jsonpath='***.status.loadBalancer.ingress[0].ip***')
+  kubectl get service my-release-spring-cloud-dataflow-server
+  export SERVICE_PORT=$(kubectl get --namespace default -o jsonpath=".spec.ports[0].port" services my-release-spring-cloud-dataflow-server)
+  export SERVICE_IP=$(kubectl get svc --namespace default my-release-spring-cloud-dataflow-server -o jsonpath='.status.loadBalancer.ingress[0].ip')
   echo "SCDF dashboard: http://${SERVICE_IP}:${SERVICE_PORT}/dashboard"
 fi
 
