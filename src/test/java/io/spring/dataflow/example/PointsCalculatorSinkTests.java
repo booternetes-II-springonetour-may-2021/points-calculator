@@ -27,18 +27,21 @@ public class PointsCalculatorSinkTests {
 	private MockWebServer server = new MockWebServer();
 
 	@Test
-	void consumerWorks() throws InterruptedException {
+	void worksAsConsumer() throws InterruptedException {
 		MockResponse mockResponse = new MockResponse();
 		mockResponse.setResponseCode(HttpStatus.OK.value());
 		server.enqueue(mockResponse);
 
 		try (ConfigurableApplicationContext context = new SpringApplicationBuilder(PointsCalculatorSinkApplication.class)
 				.web(WebApplicationType.NONE).build()
-				.run("--http.request.url-expression='" + url() + "'")) {
-			Consumer<Integer> postPoints = context.getBean(Consumer.class, "postPoints");
-			postPoints.accept(579);
+				.run("--http.request.url-expression='" + url() + "/'+headers['username']")) {
+			Consumer<Message<Points>> postPoints = context.getBean(Consumer.class, "postPoints");
+			Message message = MessageBuilder.withPayload(new Points(579)).setHeader("username","user123")
+					.build();
+			postPoints.accept(message);
 			RecordedRequest recordedRequest = server.takeRequest(3, TimeUnit.SECONDS);
-			assertThat(recordedRequest.getBody()).asString().contains("579");
+			assertThat(recordedRequest.getBody()).asString().isEqualTo("[text={\"points\":579}]");
+			assertThat(recordedRequest.getRequestUrl().encodedPath()).endsWith("/user123");
 			assertThat(recordedRequest.getMethod()).isEqualTo("POST");
 		}
 	}
@@ -51,13 +54,14 @@ public class PointsCalculatorSinkTests {
 		try (ConfigurableApplicationContext context = new SpringApplicationBuilder(
 				TestChannelBinderConfiguration.getCompleteConfiguration(PointsCalculatorSinkApplication.class))
 				.web(WebApplicationType.NONE).build()
-				.run("--http.request.url-expression='" + url() + "'")) {
-			Message<?> message = MessageBuilder.withPayload(5.79)
+				.run("--http.request.url-expression='" + url() + "/'+headers['username']")) {
+			Message<?> message = MessageBuilder.withPayload(new Purchase(5.79, "user123"))
 					.build();
 			InputDestination inputDestination = context.getBean(InputDestination.class);
 			inputDestination.send(message);
 			RecordedRequest recordedRequest = server.takeRequest(3, TimeUnit.SECONDS);
-			assertThat(recordedRequest.getBody()).asString().contains("579");
+			assertThat(recordedRequest.getRequestUrl().encodedPath()).endsWith("/user123");
+			assertThat(recordedRequest.getBody()).asString().isEqualTo("[text={\"points\":579}]");
 			assertThat(recordedRequest.getMethod()).isEqualTo("POST");
 		}
 	}

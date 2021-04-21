@@ -6,7 +6,6 @@ import java.util.function.Function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.messaging.Message;
 import reactor.core.publisher.Flux;
 
 import org.springframework.boot.SpringApplication;
@@ -15,8 +14,9 @@ import org.springframework.cloud.fn.http.request.HttpRequestFunctionConfiguratio
 import org.springframework.cloud.fn.http.request.HttpRequestFunctionConfiguration.HttpRequestFunction;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
-import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.Message;
 import org.springframework.messaging.support.GenericMessage;
+import org.springframework.messaging.support.MessageBuilder;
 
 @SpringBootApplication
 @Import(HttpRequestFunctionConfiguration.class)
@@ -31,21 +31,23 @@ public class PointsCalculatorSinkApplication {
 	}
 
 	@Bean
-	Function<Double, Integer> calculatePoints() {
-		return amount -> BigDecimal.valueOf(amount)
-			.setScale(2)
-			.multiply(BigDecimal.valueOf(POINTS_MULTIPLIER))
-			.intValue();
+	Function<Purchase, Message<Points>> calculatePoints() {
+		return purchase -> MessageBuilder
+				.withPayload(new Points(BigDecimal.valueOf(purchase.getAmount())
+					.setScale(2)
+					.multiply(BigDecimal.valueOf(POINTS_MULTIPLIER))
+					.intValue()))
+				.setHeader("username", purchase.getUsername())
+				.build();
 	}
 
 	@Bean
-	Consumer<Integer> postPoints(HttpRequestFunction httpRequestFunction) {
-		return points -> {
-			Flux<Message<?>> messages = Flux.just(new GenericMessage<>(points));
+	Consumer<Message<Points>> postPoints(HttpRequestFunction httpRequestFunction) {
+		return pointsMessage -> {
 			httpRequestFunction
-				.apply(messages)
-				.doOnError(throwable -> logger.error(throwable.getMessage(), throwable))
-				.blockFirst();
+					.apply(Flux.just(pointsMessage))
+					.doOnError(throwable -> logger.error(throwable.getMessage(), throwable))
+					.blockFirst();
 		};
 	}
 }
