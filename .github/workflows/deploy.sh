@@ -9,7 +9,7 @@ chmod 700 get_helm.sh
 
 kubectl config current-context
 
-helm uninstall my-release-spring-cloud-dataflow-server
+helm uninstall my-release
 
 if [[ $(helm list | tail -n +2 | grep spring-cloud-dataflow | awk '{print $8}') != "deployed" ]]; then
   echo "installing Spring Cloud Dataflow..."
