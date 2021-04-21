@@ -12,8 +12,11 @@ if [[ $(helm list | tail -n +2 | grep spring-cloud-dataflow | awk '{print $8}') 
   helm repo add bitnami https://charts.bitnami.com/bitnami
   helm install my-release bitnami/spring-cloud-dataflow
 else
-  echo $(kubectl get services my-release-spring-cloud-dataflow -o yaml)
+  echo $(kubectl get services --namespace default)
+  echo $(kubectl get services --namespace default my-release-spring-cloud-dataflow -o yaml)
 fi
+
+exit 0
 
 echo "building and pushing app image ..."
 
