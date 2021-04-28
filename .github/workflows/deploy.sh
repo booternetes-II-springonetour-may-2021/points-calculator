@@ -7,19 +7,19 @@ curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scr
 chmod 700 get_helm.sh
 ./get_helm.sh
 
-if [[ $(helm list | tail -n +2 | grep spring-cloud-dataflow | awk '{print $8}') != "deployed" ]]; then
+NAMESPACE=bk
+HELM_ID=demo
+
+if [[ $(helm list --namespace $NAMESPACE | tail -n +2 | grep spring-cloud-dataflow | awk '{print $8}') != "deployed" ]]; then
   echo "installing Spring Cloud Dataflow..."
   helm repo add bitnami https://charts.bitnami.com/bitnami
-  helm install --set server.service.type=LoadBalancer my-release bitnami/spring-cloud-dataflow
+  helm delete $HELM_ID --namespace  $NAMESPACE
+  helm install --set server.service.type=LoadBalancer $HELM_ID bitnami/spring-cloud-dataflow --namespace $NAMESPACE
 else
-  kubectl get endpoints my-release-spring-cloud-dataflow-server
-  kubectl get service my-release-spring-cloud-dataflow-server -o yaml
-  export SERVICE_PORT=$(kubectl get --namespace default -o jsonpath="{..spec.ports[0].port}" services my-release-spring-cloud-dataflow-server)
-  export SERVICE_IP=$(kubectl get svc --namespace default my-release-spring-cloud-dataflow-server -o jsonpath="{..status.loadBalancer.ingress[0].ip}")
+  export SERVICE_PORT=$(kubectl get --namespace $NAMESPACE -o jsonpath="{..spec.ports[0].port}" services $HELM_ID-spring-cloud-dataflow-server)
+  export SERVICE_IP=$(kubectl get svc --namespace $NAMESPACE $HELM_ID-spring-cloud-dataflow-server -o jsonpath="{..status.loadBalancer.ingress[0].ip}")
   echo "SCDF dashboard: http://${SERVICE_IP}:${SERVICE_PORT}/dashboard"
 fi
-
-exit 0
 
 echo "building and pushing app image ..."
 
