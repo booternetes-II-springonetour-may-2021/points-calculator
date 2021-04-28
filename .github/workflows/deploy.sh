@@ -13,7 +13,6 @@ HELM_ID=demo
 if [[ $(helm list --namespace $NAMESPACE | tail -n +2 | grep spring-cloud-dataflow | awk '{print $8}') != "deployed" ]]; then
   echo "installing Spring Cloud Dataflow..."
   helm repo add bitnami https://charts.bitnami.com/bitnami
-  helm delete $HELM_ID --namespace  $NAMESPACE
   helm install --set server.service.type=LoadBalancer $HELM_ID bitnami/spring-cloud-dataflow --namespace $NAMESPACE
 else
   export SERVICE_PORT=$(kubectl get --namespace $NAMESPACE -o jsonpath="{..spec.ports[0].port}" services $HELM_ID-spring-cloud-dataflow-server)
