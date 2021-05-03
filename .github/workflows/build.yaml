@@ -54,5 +54,5 @@ jobs:
       - name: Deploy
         run: |
           cd $GITHUB_WORKSPACE
-          docker login -u ${secrets.DOCKER_ORG} -p ${secrets.DOCKER_PASSWORD}
+          docker login -u {{ secrets.DOCKER_ORG }} -p {{secrets.DOCKER_PASSWORD }}
           .github/workflows/deploy.sh
