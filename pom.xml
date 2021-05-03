@@ -16,6 +16,8 @@
 	<properties>
 		<java.version>11</java.version>
 		<spring-cloud.version>2020.0.2</spring-cloud.version>
+		<docker.version>v3</docker.version>
+		<docker.org>dturanski</docker.org>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -84,7 +86,7 @@
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
 					<image>
-						<name>docker.io/dturanski/${project.artifactId}:v2</name>
+						<name>docker.io/${docker.org}/${project.artifactId}:${docker.version}</name>
 					</image>
 				</configuration>
 			</plugin>
