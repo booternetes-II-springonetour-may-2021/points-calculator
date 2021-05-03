@@ -50,8 +50,9 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE
           echo $PWD
-          ./install-scdf.sh
+          .github/workflows/install-scdf.sh
       - name: Deploy
         run: |
+          cd $GITHUB_WORKSPACE
           docker login -u ${secrets.DOCKER_ORG} -p ${secrets.DOCKER_PASSWORD}
-          ./deploy.sh
+          .github/workflows/deploy.sh
