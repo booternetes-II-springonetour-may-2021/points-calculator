@@ -1,6 +1,5 @@
 name: Deploy
 
-
 env:
   ACTIONS_ALLOW_UNSECURE_COMMANDS: true
   GCLOUD_ZONE: ${{ secrets.GCLOUD_ZONE }}
@@ -18,6 +17,7 @@ on:
 
 jobs:
   build:
+    environment: default
     runs-on: ubuntu-latest
     steps:
 
