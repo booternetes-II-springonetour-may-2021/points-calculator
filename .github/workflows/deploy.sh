@@ -30,14 +30,10 @@ cd ../..
 pwd
 
 export APP_NAME=points-calculator-sink
-export GCR_IMAGE_NAME=gcr.io/${PROJECT_ID}/${APP_NAME}
+export IMAGE_NAME=docker.io/dturanski/${APP_NAME}
 #docker rmi $(docker images -a -q)
 mvn clean package spring-boot:build-image
 
-image_id=$(docker images -q $APP_NAME)
-
-echo "tagging ${GCR_IMAGE_NAME}"
-docker tag "${image_id}" $GCR_IMAGE_NAME
-
-echo "pushing ${image_id} to $GCR_IMAGE_NAME "
-docker push $GCR_IMAGE_NAME
+echo "pushing ${IMAGE_NAME}"
+docker login -u ${secrets.docker_user} -p ${secrets.docker_password}
+docker push $IMAGE_NAME
