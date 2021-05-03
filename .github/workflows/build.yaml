@@ -46,8 +46,12 @@ jobs:
           gcloud config set project $GCLOUD_PROJECT
           gcloud --quiet auth configure-docker
           gcloud container clusters get-credentials $GKE_CLUSTER_NAME --zone "$GCLOUD_ZONE" --project $GCLOUD_PROJECT
-
+      - name: Install_SCDF
+        run: |
+          cd $GITHUB_WORKSPACE
+          ./github/workflows/install_scdf.sh
       - name: Deploy
         run: |
+          docker login -u ${secrets.DOCKER_ORG} -p ${secrets.DOCKER_PASSWORD}
           cd $GITHUB_WORKSPACE
           .github/workflows/deploy.sh
