@@ -1,6 +1,5 @@
 package io.spring.dataflow.example;
 
-import java.math.BigDecimal;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -14,9 +13,7 @@ import org.springframework.cloud.fn.http.request.HttpRequestFunctionConfiguratio
 import org.springframework.cloud.fn.http.request.HttpRequestFunctionConfiguration.HttpRequestFunction;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
-import org.springframework.messaging.Message;
 import org.springframework.messaging.support.GenericMessage;
-import org.springframework.messaging.support.MessageBuilder;
 
 @SpringBootApplication
 @Import(HttpRequestFunctionConfiguration.class)
@@ -31,23 +28,15 @@ public class PointsCalculatorSinkApplication {
 	}
 
 	@Bean
-	Function<Purchase, Message<Points>> calculatePoints() {
-		return purchase -> MessageBuilder
-				.withPayload(new Points(BigDecimal.valueOf(purchase.getAmount())
-					.setScale(2)
-					.multiply(BigDecimal.valueOf(POINTS_MULTIPLIER))
-					.intValue()))
-				.setHeader("username", purchase.getUsername())
-				.build();
+	Function<Purchase, Points> calculatePoints() {
+		return purchase -> new Points(purchase.getUsername(), purchase.getAmount() * POINTS_MULTIPLIER);
 	}
 
 	@Bean
-	Consumer<Message<Points>> postPoints(HttpRequestFunction httpRequestFunction) {
-		return pointsMessage -> {
-			httpRequestFunction
-					.apply(Flux.just(pointsMessage))
-					.doOnError(throwable -> logger.error(throwable.getMessage(), throwable))
-					.blockFirst();
-		};
+	Consumer<Points> postPoints(HttpRequestFunction httpRequestFunction) {
+		return points -> httpRequestFunction
+				.apply(Flux.just(new GenericMessage<>(points)))
+				.doOnError(throwable -> logger.error(throwable.getMessage(), throwable))
+				.blockFirst();
 	}
 }

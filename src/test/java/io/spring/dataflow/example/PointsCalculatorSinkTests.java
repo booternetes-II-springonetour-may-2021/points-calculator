@@ -34,13 +34,12 @@ public class PointsCalculatorSinkTests {
 
 		try (ConfigurableApplicationContext context = new SpringApplicationBuilder(PointsCalculatorSinkApplication.class)
 				.web(WebApplicationType.NONE).build()
-				.run("--http.request.url-expression='" + url() + "/'+headers['username']")) {
-			Consumer<Message<Points>> postPoints = context.getBean(Consumer.class, "postPoints");
-			Message message = MessageBuilder.withPayload(new Points(579)).setHeader("username","user123")
-					.build();
-			postPoints.accept(message);
+				.run("--http.request.url-expression='" + url() + "/'+payload.username")) {
+			Consumer<Points> postPoints = context.getBean(Consumer.class, "postPoints");
+			postPoints.accept(new Points("user123", 579));
 			RecordedRequest recordedRequest = server.takeRequest(3, TimeUnit.SECONDS);
-			assertThat(recordedRequest.getBody()).asString().isEqualTo("[text={\"points\":579}]");
+			assertThat(recordedRequest.getBody()).asString()
+					.isEqualTo("[text={\"username\":\"user123\",\"points\":579}]");
 			assertThat(recordedRequest.getRequestUrl().encodedPath()).endsWith("/user123");
 			assertThat(recordedRequest.getMethod()).isEqualTo("POST");
 		}
@@ -54,14 +53,15 @@ public class PointsCalculatorSinkTests {
 		try (ConfigurableApplicationContext context = new SpringApplicationBuilder(
 				TestChannelBinderConfiguration.getCompleteConfiguration(PointsCalculatorSinkApplication.class))
 				.web(WebApplicationType.NONE).build()
-				.run("--http.request.url-expression='" + url() + "/'+headers['username']")) {
-			Message<?> message = MessageBuilder.withPayload(new Purchase(5.79, "user123"))
+				.run("--http.request.url-expression='" + url() + "/'+payload.username")) {
+			Message<?> message = MessageBuilder.withPayload(new Purchase(5, "user123"))
 					.build();
 			InputDestination inputDestination = context.getBean(InputDestination.class);
 			inputDestination.send(message);
 			RecordedRequest recordedRequest = server.takeRequest(3, TimeUnit.SECONDS);
 			assertThat(recordedRequest.getRequestUrl().encodedPath()).endsWith("/user123");
-			assertThat(recordedRequest.getBody()).asString().isEqualTo("[text={\"points\":579}]");
+			assertThat(recordedRequest.getBody()).asString()
+					.isEqualTo("[text={\"username\":\"user123\",\"points\":500}]");
 			assertThat(recordedRequest.getMethod()).isEqualTo("POST");
 		}
 	}

@@ -8,6 +8,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Purchase {
-	private double amount;
+	private int amount;
 	private String username;
 }
