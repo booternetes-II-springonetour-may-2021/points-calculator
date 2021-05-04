@@ -13,7 +13,7 @@ pwd
 export APP_NAME=points-calculator-sink
 export IMAGE_NAME=docker.io/dturanski/${APP_NAME}
 #docker rmi $(docker images -a -q)
-mvn clean package spring-boot:build-image
+mvn clean package spring-boot:build-image -Ddocker.version=latest
 
 echo "pushing ${IMAGE_NAME}"
 docker push $IMAGE_NAME
